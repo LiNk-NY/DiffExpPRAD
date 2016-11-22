@@ -29,7 +29,22 @@ Exon9s <- lapply(grl, function(sample) {
     sample[overlapsAny(sample, exon9, type = "any")]
 })
 
-saveRDS(Exon9s, file = "data-raw/exon9grl.rds")
+bcodes <- names(Exon9s)
 
-rm(grl)
-gc()
+# saveRDS(Exon9s, file = "data-raw/exon9grl.rds")
+# rm(grl)
+# gc()
+# Exon9s <- readRDS("data-raw/exon9grl.rds")
+
+stopifnot(identical(validMap$barcode, names(Exon9s)))
+
+rpkm <- vapply(Exon9s, FUN = function(samp) mcols(samp)$RPKM,
+               FUN.VALUE = numeric(1L))
+
+fullDF <- cbind.data.frame(validMap, rpkm)
+fullDF$rpkm100 <- fullDF$rpkm*100
+fullDF$rpkm100W <- round(fullDF$rpkm100, digits = 0)
+
+expd <- MASS::glm.nb(rpkm100W ~ race, data = fullDF)
+summary(expd)
+caucasian <- exp(c(estimate = coef(expd)[[2]], confint(expd)[2, ]))
