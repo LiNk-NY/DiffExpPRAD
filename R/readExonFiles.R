@@ -22,7 +22,8 @@ validMap <- validMap[order(validMap$file_id),]
 stopifnot(identical(validMap$file_id, validFoldersOnDisk))
 stopifnot(identical(basename(dirname(exonFiles)), validMap$file_id))
 
-grl <- TCGAexonToGRangesList(exonFiles, filenames = validMap$barcode)
+## Read files from disk
+grl <- TCGAexonToGRangesList(exonFiles, sampleNames = validMap$barcode)
 
 Exon9s <- lapply(grl, function(sample) {
     sample[overlapsAny(sample, exon9, type = "any")]
