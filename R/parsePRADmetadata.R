@@ -1,4 +1,7 @@
 library(tidyjson)
+library(BiocInterfaces)
+library(readr)
+
 metadatas <- tidyjson::read_json("data-raw/metadata.cart.2016-11-10T23-36-01.808261_ALL.json")
 
 # unlist(attributes(metadatas)$JSON[[1]][[1]])
@@ -14,13 +17,20 @@ IDS <- lapply(seq_along(metaList), function(i) {
     unlist(metaList[i])[c(bcodeIdx, fileIdx)]
 })
 
-bcodeFileID <- data.frame(do.call(rbind, IDS), stringsAsFactors = FALSE)
+bcodeFileDF <- data.frame(do.call(rbind, IDS), stringsAsFactors = FALSE)
+names(bcodeFileDF) <- c("barcode", "file_id")
 
 ## Read the race variable
-racevar <- read_csv("https://raw.githubusercontent.com/lwaldron/tcga_prad/master/racevariable.csv")
+racevar <- readr::read_csv("https://raw.githubusercontent.com/lwaldron/tcga_prad/master/racevariable.csv")
 names(racevar) <- c("patientID", "race")
 racevar$patientID <- toupper(gsub("\\.", "-", racevar$patientID))
 
-match(racevar$patientID,
-      TCGAbarcode(bcodeFileID$cases.samples.portions.analytes.aliquots.submitter_id))
+raceshort <- racevar[racevar$race %in% c("white", "black or african american"), ]
 
+validDF <- bcodeFileDF[na.omit(
+    match(raceshort$patientID,
+          TCGAbarcode(bcodeFileDF$barcode))),]
+
+validMap <- cbind.data.frame(validDF,
+                             race = raceshort$race[match(TCGAbarcode(validDF$barcode),
+                                                         raceshort$patientID)], stringsAsFactors = FALSE)
