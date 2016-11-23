@@ -1,6 +1,8 @@
 source("R/parsePRADmetadata.R")
 
-exonFiles <- list.files("/data/exon/", recursive = TRUE, pattern = "tion.txt$", full.names = TRUE)
+dataLocation <- "~/data/exon"
+
+exonFiles <- list.files(dataLocation, recursive = TRUE, pattern = "tion.txt$", full.names = TRUE)
 folders <- basename(dirname(exonFiles))
 
 validIdx <- match(validMap$file_id, folders)
