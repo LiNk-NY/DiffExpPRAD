@@ -1,6 +1,3 @@
-library(BiocInterfaces)
-library(readr)
-
 source("R/parsePRADmetadata.R")
 
 exonFiles <- list.files("/data/exon/", recursive = TRUE, pattern = "tion.txt$", full.names = TRUE)
