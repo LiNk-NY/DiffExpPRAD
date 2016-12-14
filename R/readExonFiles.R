@@ -39,28 +39,39 @@ if (!dir.exists("data"))
     dir.create("data")
 saveRDS(sampleList, file = "data/rangeRPKM.rds")
 
+## Take only the tumor samples
+full_barcodes <- names(sampleList)
+sampleType <- TCGAbarcode(full_barcodes, sample = TRUE, participant = FALSE)
+
+## Load table of sample code types
+data(sampleTypes)
+sampleType
+
+tumors <- grepl("01", sampleType, fixed = TRUE)
+
+tumorList <- sampleList[tumors]
+
 ## Data integrity checks
 ## 1. Check that all samples have the same number of ranges
-numRanges <- lapply(sampleList, function(element) {
+numRanges <- lapply(tumorList, function(element) {
     length(element[["exon"]])
 })
 stopifnot(all(unlist(numRanges) == 239322))
 
 ## 2. Check that all ranges are the same across samples
-listRanges <- lapply(sampleList, function(element) {
+listRanges <- lapply(tumorList, function(element) {
     GRanges(element[["exon"]])
 })
-reducedRanges <- Reduce(intersect, listRanges)
-stopifnot(length(Reduce(intersect, listRanges)) == 239322)
+unionRanges <- Reduce(union, listRanges)
+
+stopifnot(length(unionRanges) == 239322)
 
 saveRDS(reducedRanges, file = "data/reducedRanges.rds")
 
 
-## Find only tumors in the sampleList
-full_barcodes <- names(sampleList)
-sampleType <- TCGAbarcode(full_barcodes, sample = TRUE, participant = FALSE)
 
-data(sampleTypes)
+## Use RangedSummarizedExperiment class
+
 
 Exon9s <- lapply(grl, function(sample) {
     sample[overlapsAny(sample, exon9, type = "any")]
